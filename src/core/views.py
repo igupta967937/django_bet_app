@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect
 from django.views.generic import ListView, DetailView, View
 from django.contrib import messages
 from .models import BetSlip, Game, Profile, User
-from .premier_league import matches, odds, live_matches, standings
+from .premier_league import matches, odds, standings
 
 from django.contrib.auth.decorators import login_required
 
@@ -121,7 +121,7 @@ def coupons(request):
     bet_slip_qs = BetSlip.objects.filter(profile=profile, accepted=True)
     if bet_slip_qs.exists():
         context = {
-            'coupons':bet_slip_qs
+            'coupons':bet_slip_qs.order_by("-datetime")
         }
         return render(request,"coupons.html",context)
     else:
@@ -149,41 +149,44 @@ class CouponDetailView(DetailView):
                     game_result.append(data)
 
         get_game_status(self.request, game_result, self.kwargs['slug'])
-
+        get_coupon_status(self.request,self.kwargs['slug'])
         return context
 
 def get_game_status(request, game_result, slug):
     profile = Profile.objects.get(user=request.user)
-    coupon = BetSlip.objects.get(profile=profile, slug=slug, accepted=True)
-    for i in coupon.games.all():
-        for j in game_result:
-            if i.home_team == j['home_team'] and i.away_team == j['away_team']:
-                i.result = j['result']
-                i.save()
-                coupon.save()
-                if i.result == i.prediction:
-                    i.status = 'Won'
-                else:
-                    i.status = 'Lost'
-                i.save()
-                coupon.save()
+    coupon_qs = BetSlip.objects.filter(profile=profile, slug=slug, accepted=True, status='NR')
+    if coupon_qs.exists():
+        coupon = coupon_qs[0]
+        for i in coupon.games.all():
+            for j in game_result:
+                if i.home_team == j['home_team'] and i.away_team == j['away_team']:
+                    i.result = j['result']
+                    i.save()
+                    coupon.save()
+                    if i.result == i.prediction:
+                        i.status = 'Won'
+                    else:
+                        i.status = 'Lost'
+                    i.save()
+                    coupon.save()
 
-def get_coupon_result(request, slug):
+def get_coupon_status(request, slug):
     profile = Profile.objects.get(user=request.user)
-    coupon = BetSlip.objects.get(profile=profile, slug=slug, accepted=True)
-
-    if all(x == "Won" for x in coupon.games.all()[0].status):
-        coupon.status = 'Won'
-        new_balance = profile.balance + coupon.get_potential_return()
-        profile.balance = new_balance
-        profile.save()
-        coupon.save()
-
-    for i in coupon.games.all():
-        if i.status == 'Lost':
-            coupon.status = 'Lost'
+    coupon_qs = BetSlip.objects.filter(profile=profile, slug=slug, accepted=True, status='NR')
+    if coupon_qs.exists():
+        coupon = coupon_qs[0]
+        if all(x == "Won" for x in coupon.games.all()[0].status):
+            coupon.status = 'Won'
+            new_balance = profile.balance + coupon.get_potential_return()
+            profile.balance = new_balance
+            profile.save()
             coupon.save()
-            break
+
+        for i in coupon.games.all():
+            if i.status == 'Lost':
+                coupon.status = 'Lost'
+                coupon.save()
+                break
 
 def get_game_result(request, slug):
     profile = Profile.objects.get(user=request.user)

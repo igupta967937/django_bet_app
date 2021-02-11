@@ -18,19 +18,12 @@ def matches():
     return items[start:finish]
 
 def odds():
-    url = "https://bet1-x00495.com/LineFeed/Get1x2_VZip?champs=88637,118587,118593&count=10&lng=en&mode=4&top=true&partner=7"
+    url = "https://1-xbahis09095.com/LineFeed/Get1x2_VZip?champs=88637,118587,118593&count=10&lng=en&mode=4&top=true&partner=7"
     data = requests.get(url).json()
     items = data['Value']
     return items
     # for i in items:
 	#     print(i['O1']+' - '+i['O2']+' W1:'+str(i['E'][0]['C'])+' Draw:'+str(i['E'][1]['C'])+' W2:'+str(i['E'][2]['C']))
-
-def live_matches():
-    url = "https://bet1-x20027.com/LiveFeed/Get1x2_VZip?champs=88637,118587,118593&count=10&lng=en&mode=4&top=true&partner=7"
-
-    data = requests.get(url).json()
-    items = data['Value']
-    return items
 
 def standings():
     url = "https://prod-public-api.livescore.com/v1/api/react/stage/soccer/england/premier-league/4.00"

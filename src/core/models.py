@@ -31,6 +31,7 @@ class BetSlip(models.Model):
     accepted = models.BooleanField(default=False)
     status = models.CharField(max_length=10, default='NR')
     stake = models.FloatField(blank=True,null=True)
+    datetime = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.profile.user.username
